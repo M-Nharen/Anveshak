@@ -1,0 +1,14 @@
+
+# ROS2 specific
+build/
+install/
+log/
+
+# Python specific
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
