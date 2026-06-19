@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+// --- JETSON -> ESP32 MESSAGES ---
+
+// Message to control rover movement velocities
+message MotionCommand {
+    float linear_x = 1;
+    float angular_z = 2;
+}
+
+// Message to toggle a status or indicator LED
+message LedCommand {
+    bool b_led_on = 1;
+}
+
+// Top-level container wrapper for all data sent down to the ESP32
+message JetsonToEspPacket {
+    oneof packet_type {
+        MotionCommand motion = 1;
+        LedCommand led = 2;
+    }
+}
+
+// --- ESP32 -> JETSON MESSAGES ---
+
+// Message tracking cumulative raw wheel encoder ticks
+message EncoderTelemetry {
+    int32 left_ticks = 1;
+    int32 right_ticks = 2;
+}
+
+// Message tracking the real-time battery rail voltage
+message BatteryTelemetry {
+    float voltage = 1;
+}
+
+// Top-level container wrapper for all data sent up to the Jetson
+message EspToJetsonPacket {
+    oneof packet_type {
+        EncoderTelemetry encoder = 1;
+        BatteryTelemetry battery = 2;
+    }
+}
