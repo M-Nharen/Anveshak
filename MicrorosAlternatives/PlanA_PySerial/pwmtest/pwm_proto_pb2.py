@@ -13,19 +13,19 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0fpwm_proto.proto\"1\n\nPwmCommand\x12\x10\n\x08left_pwm\x18\x01 \x01(\x05\x12\x11\n\tright_pwm\x18\x02 \x01(\x05\">\n\x11JetsonToEspPacket\x12\x1a\n\x03pwm\x18\x01 \x01(\x0b\x32\x0b.PwmCommandH\x00\x42\r\n\x0bpacket_type\"\x1a\n\nLogMessage\x12\x0c\n\x04text\x18\x01 \x01(\t\">\n\x11\x45spToJetsonPacket\x12\x1a\n\x03log\x18\x01 \x01(\x0b\x32\x0b.LogMessageH\x00\x42\r\n\x0bpacket_typeb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0fpwm_proto.proto\x12\x08pwm_link\"1\n\nPwmCommand\x12\x10\n\x08left_pwm\x18\x01 \x01(\x11\x12\x11\n\tright_pwm\x18\x02 \x01(\x11\"O\n\x11JetsonToEspPacket\x12+\n\x0bpwm_command\x18\x01 \x01(\x0b\x32\x14.pwm_link.PwmCommandH\x00\x42\r\n\x0bpacket_type\"\x1a\n\nLogMessage\x12\x0c\n\x04text\x18\x01 \x01(\t\"O\n\x11\x45spToJetsonPacket\x12+\n\x0blog_message\x18\x01 \x01(\x0b\x32\x14.pwm_link.LogMessageH\x00\x42\r\n\x0bpacket_typeb\x06proto3')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'pwm_proto_pb2', globals())
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
-  _PWMCOMMAND._serialized_start=19
-  _PWMCOMMAND._serialized_end=68
-  _JETSONTOESPPACKET._serialized_start=70
-  _JETSONTOESPPACKET._serialized_end=132
-  _LOGMESSAGE._serialized_start=134
-  _LOGMESSAGE._serialized_end=160
-  _ESPTOJETSONPACKET._serialized_start=162
-  _ESPTOJETSONPACKET._serialized_end=224
+  _PWMCOMMAND._serialized_start=29
+  _PWMCOMMAND._serialized_end=78
+  _JETSONTOESPPACKET._serialized_start=80
+  _JETSONTOESPPACKET._serialized_end=159
+  _LOGMESSAGE._serialized_start=161
+  _LOGMESSAGE._serialized_end=187
+  _ESPTOJETSONPACKET._serialized_start=189
+  _ESPTOJETSONPACKET._serialized_end=268
 # @@protoc_insertion_point(module_scope)

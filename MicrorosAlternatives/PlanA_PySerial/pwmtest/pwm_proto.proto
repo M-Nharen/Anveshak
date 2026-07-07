@@ -1,24 +1,40 @@
 syntax = "proto3";
 
-// --- JETSON -> ESP32 (ACTUATOR VALUE FLOW) ---
+package pwm_link;
+
+// ------------------------------------------------------------------
+// DOWNSTREAM: Jetson -> ESP32
+// ------------------------------------------------------------------
+
+// sint32 is used (not int32) because it ZigZag-encodes the field,
+// which keeps the varint short for small negative numbers like our
+// -255..255 PWM range. A plain int32 would encode negative values
+// as a full 10-byte varint (two's complement sign extension to 64
+// bits); sint32 keeps it to 1-2 bytes.
 message PwmCommand {
-    int32 left_pwm = 1;   // Acceptable range: -255 to 255
-    int32 right_pwm = 2;  // Acceptable range: -255 to 255
+  sint32 left_pwm = 1;
+  sint32 right_pwm = 2;
 }
 
+// Top-level downstream envelope. The oneof keeps this wire-compatible
+// with future packet types (e.g. a future EStopCommand) without
+// breaking existing decoders on either side.
 message JetsonToEspPacket {
-    oneof packet_type {
-        PwmCommand pwm = 1;
-    }
+  oneof packet_type {
+    PwmCommand pwm_command = 1;
+  }
 }
 
-// --- ESP32 -> JETSON (IMMEDIATE LOG ECHO) ---
+// ------------------------------------------------------------------
+// UPSTREAM: ESP32 -> Jetson
+// ------------------------------------------------------------------
+
 message LogMessage {
-    string text = 1;      // String message carrying real-time echo
+  string text = 1;
 }
 
 message EspToJetsonPacket {
-    oneof packet_type {
-        LogMessage log = 1;
-    }
+  oneof packet_type {
+    LogMessage log_message = 1;
+  }
 }
