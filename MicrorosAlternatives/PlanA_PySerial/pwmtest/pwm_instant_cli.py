@@ -23,7 +23,6 @@ class PwmInstantCli(Node):
         
         while rclpy.ok():
             try:
-                # Direct block read from sys stdin pipeline
                 sys.stdout.write("Enter PWM (L,R): ")
                 sys.stdout.flush()
                 user_line = sys.stdin.readline().strip()
@@ -45,7 +44,7 @@ class PwmInstantCli(Node):
                 else:
                     print("\n[!] Invalid format. Use: Left,Right (e.g. 100,100)")
             except ValueError:
-                print("\n[!] Integers numbers only.")
+                print("\n[!] Integer numbers only.")
             except (KeyboardInterrupt, EOFError):
                 break
 

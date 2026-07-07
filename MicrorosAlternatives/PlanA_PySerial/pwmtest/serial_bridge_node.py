@@ -1,73 +1,51 @@
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Twist
+from std_msgs.msg import Int32MultiArray # Adjust message type if yours is different
 import serial
-import threading
 from cobs import cobs
-import pwm_proto_pb2 
+import pwm_proto_pb2  # Your compiled protobuf file
 
 class SerialBridgeNode(Node):
     def __init__(self):
         super().__init__('serial_bridge_node')
         
-        # Configure hardware link with microsecond level timeouts
-        self.serial_port = serial.Serial('/dev/ttyACM0', 115200, timeout=0.001, write_timeout=0.001)
-        self.subscription = self.create_subscription(Twist, 'cmd_pwm', self.pwm_callback, 10)
-        
-        # Immediate extraction reader thread 
-        self.running = True
-        self.rx_thread = threading.Thread(target=self.receive_loop, daemon=True)
-        self.rx_thread.start()
-        
-        self.get_logger().info("Bi-directional Pipeline Gateway initialized.")
+        # Open port & instantly wipe out residual connection garbage
+        self.serial_port = serial.Serial('/dev/ttyUSB0', 115200, timeout=0.1)
+        self.serial_port.reset_input_buffer()
+        self.serial_port.reset_output_buffer()
+
+        # Subscription to receive commands from ROS 2 environment
+        self.subscription = self.create_subscription(
+            Int32MultiArray,
+            '/cmd_pwm',
+            self.pwm_callback,
+            10
+        )
+        self.get_logger().info("Bi-directional Pipeline Gateway initialized cleanly.")
 
     def pwm_callback(self, msg):
-        packet = pwm_proto_pb2.JetsonToEspPacket()
-        packet.pwm.left_pwm = int(msg.linear.x)
-        packet.pwm.right_pwm = int(msg.angular.z)
+        if len(msg.data) < 2:
+            return
 
-        # Apply COBS Framing limits
-        cobs_frame = cobs.encode(packet.SerializeToString()) + b'\x00'
         try:
-            self.serial_port.write(cobs_frame)
-            self.serial_port.flush()  # Force data onto physical copper line instantly
-        except serial.SerialException as e:
-            self.get_logger().error(f"Serial transmission crash: {e}")
+            # 1. Build Protobuf Structure
+            tx_packet = pwm_proto_pb2.JetsonToEspPacket()
+            tx_packet.pwm.left_pwm = msg.data[0]
+            tx_packet.pwm.right_pwm = msg.data[1]
 
-    def receive_loop(self):
-        buffer = bytearray()
-        while self.running and rclpy.ok():
-            try:
-                if self.serial_port.in_waiting > 0:
-                    data = self.serial_port.read(self.serial_port.in_waiting)
-                    for byte in data:
-                        if byte == 0x00:
-                            if buffer:
-                                self.process_upstream_packet(buffer)
-                                buffer.clear()
-                        else:
-                            buffer.append(byte)
-            except Exception:
-                pass
+            # 2. Serialize and Encode using COBS
+            serialized = tx_packet.SerializeToString()
+            encoded = cobs.encode(serialized)
 
-    def process_upstream_packet(self, buffer):
-        try:
-            decoded = cobs.decode(bytes(buffer))
-            packet = pwm_proto_pb2.EspToJetsonPacket()
-            packet.ParseFromString(decoded)
-            
-            if packet.WhichOneof('packet_type') == 'log':
-                # Direct real-time terminal printout rewrite
-                sys.stdout.write(f"\r[ESP32 MONITOR]: {packet.log.text}\n")
-                sys.stdout.write("Enter PWM (L,R): ")
-                sys.stdout.flush()
-        except Exception:
-            pass
+            # 3. CRITICAL FIX: Append structural framing delimiter byte 
+            final_packet = encoded + b'\x00'
 
-    def destroy_node(self):
-        self.running = False
-        self.serial_port.close()
-        super().destroy_node()
+            # 4. Transmit over wire
+            self.serial_port.write(final_packet)
+            self.get_logger().info(f"Sent PWM -> L: {msg.data[0]}, R: {msg.data[1]}")
+
+        except Exception as e:
+            self.get_logger().error(f"Failed to encode or send packet: {e}")
 
 def main(args=None):
     rclpy.init(args=args)
@@ -77,6 +55,7 @@ def main(args=None):
     except KeyboardInterrupt:
         pass
     finally:
+        node.serial_port.close()
         node.destroy_node()
         rclpy.shutdown()
 
